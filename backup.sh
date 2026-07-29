@@ -27,7 +27,22 @@
 
 set -euo pipefail
 
-DIR_BASE="${PZ_DIR_BASE:-/opt/pilotozap}"
+# Onde o PilotoZap está instalado.
+#
+# A ordem importa. Antes, o padrão era só "/opt/pilotozap", e quem instalasse em
+# outra pasta via `--diretorio` recebia do próprio instalador o comando
+# "bash /caminho/backup.sh" — que falhava, porque o script procurava no lugar
+# errado. Agora ele descobre sozinho: usa a pasta onde o PRÓPRIO script está,
+# que é sempre a raiz da instalação. A variável de ambiente continua tendo
+# prioridade (é o que o cron usa) e o /opt/pilotozap continua como último caso.
+DIR_DO_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${PZ_DIR_BASE:-}" ]]; then
+  DIR_BASE="$PZ_DIR_BASE"
+elif [[ -f "$DIR_DO_SCRIPT/docker-compose.yml" ]]; then
+  DIR_BASE="$DIR_DO_SCRIPT"
+else
+  DIR_BASE="/opt/pilotozap"
+fi
 NOME_SERVICO="${PZ_SERVICO:-pilotozap}"
 DIR_DIARIOS="$DIR_BASE/backups/diarios"
 DIR_SEMANAIS="$DIR_BASE/backups/semanais"
