@@ -95,7 +95,10 @@ PUBLICA=$(cat "$CHAVE.pub")
 # O `command=` abaixo é o que realmente fecha: qualquer comando pedido é
 # descartado e trocado por esta mensagem. O encaminhamento de porta continua
 # funcionando normalmente, porque acontece fora do canal de comando.
-COMANDO_FIXO='echo "Esta chave serve apenas para abrir o painel do PilotoZap."; exit 1'
+# SEM aspas internas: no authorized_keys o valor de command= já vem entre aspas
+# duplas, e uma aspa dentro fecha a expressão antes da hora — o sshd passa a ler
+# o resto como lixo e a proteção some sem avisar.
+COMANDO_FIXO='echo Esta chave serve apenas para abrir o painel do PilotoZap.; exit 1'
 LINHA="restrict,port-forwarding,permitopen=\"127.0.0.1:$PORTA\",command=\"$COMANDO_FIXO\" $PUBLICA"
 
 # Remove autorização antiga desta mesma chave antes de regravar (idempotente)
