@@ -761,6 +761,19 @@ CRON
   # configurado, então não existe "esqueci minha senha" por link. Sem este
   # script, quem esquece a senha depende de alguém ditar comandos por telefone.
   obter_auxiliar "resetar-senha.sh" "$DIR_BASE/resetar-senha.sh" 0 && chmod +x "$DIR_BASE/resetar-senha.sh" || true
+
+  # Atalho de acesso: gera a chave e monta o pacote que o cliente usa para abrir
+  # o painel com dois cliques. Sem isso ele precisaria digitar o comando do túnel
+  # no PowerShell toda vez — que é justamente onde a maioria desiste.
+  if obter_auxiliar "criar-atalho.sh" "$DIR_BASE/criar-atalho.sh" 0; then
+    chmod +x "$DIR_BASE/criar-atalho.sh"
+    if PZ_DIR_BASE="$DIR_BASE" PZ_PORTA="$PORTA" bash "$DIR_BASE/criar-atalho.sh" >/dev/null 2>&1; then
+      ok "Atalho de acesso criado em $DIR_BASE/acesso/PilotoZap-atalho.zip"
+    else
+      aviso "Não consegui montar o atalho de acesso automaticamente."
+      aviso "Rode depois: ${C_NEGRITO}bash $DIR_BASE/criar-atalho.sh${C_FIM}"
+    fi
+  fi
 }
 
 # ETAPA 10 — Relatório final com o túnel SSH pronto
@@ -823,6 +836,7 @@ relatorio_final() {
    Reiniciar          : cd $DIR_BASE && docker compose restart
    Backup manual      : bash $DIR_BASE/backup.sh
    Esqueci a senha    : bash $DIR_BASE/resetar-senha.sh
+   Refazer o atalho   : bash $DIR_BASE/criar-atalho.sh
 
  Pasta da instalação : $DIR_BASE
  Backups             : $DIR_BASE/backups
