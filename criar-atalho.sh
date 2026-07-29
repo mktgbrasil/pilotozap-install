@@ -87,7 +87,16 @@ AUTORIZADAS="$DIR_SSH/authorized_keys"
 touch "$AUTORIZADAS" && chmod 600 "$AUTORIZADAS"
 
 PUBLICA=$(cat "$CHAVE.pub")
-LINHA="restrict,port-forwarding,permitopen=\"127.0.0.1:$PORTA\" $PUBLICA"
+
+# ATENÇÃO — `restrict` sozinho NÃO basta.
+# Ele desliga terminal (PTY), encaminhamento de agente e de X11, mas NÃO impede
+# executar comando: `ssh servidor "cat /etc/shadow"` não precisa de terminal e
+# passava direto, com acesso root completo. Testado e confirmado em 29/07.
+# O `command=` abaixo é o que realmente fecha: qualquer comando pedido é
+# descartado e trocado por esta mensagem. O encaminhamento de porta continua
+# funcionando normalmente, porque acontece fora do canal de comando.
+COMANDO_FIXO='echo "Esta chave serve apenas para abrir o painel do PilotoZap."; exit 1'
+LINHA="restrict,port-forwarding,permitopen=\"127.0.0.1:$PORTA\",command=\"$COMANDO_FIXO\" $PUBLICA"
 
 # Remove autorização antiga desta mesma chave antes de regravar (idempotente)
 if grep -q "pilotozap-painel" "$AUTORIZADAS" 2>/dev/null; then
@@ -109,8 +118,10 @@ echo.
 echo   Conectando ao seu servidor...
 echo.
 
-REM Abre o navegador alguns segundos depois, ja com a conexao de pe
-start /b "" cmd /c "timeout /t 5 >nul & start \"\" http://localhost:$PORTA"
+REM Abre o navegador alguns segundos depois, ja com a conexao de pe.
+REM Sem aspas escapadas: no batch do Windows \" nao e escape, e sim uma barra
+REM literal seguida de aspas — o navegador nunca abria.
+start /b "" cmd /c "timeout /t 5 >nul & start http://localhost:$PORTA"
 
 echo   O painel vai abrir sozinho no navegador.
 echo.
