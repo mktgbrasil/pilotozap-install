@@ -1,0 +1,92 @@
+# ==============================================================================
+#  PilotoZap — configuração do container
+# ==============================================================================
+#  Este arquivo é gerado automaticamente pelo instalador (install.sh).
+#  Os textos entre dois sublinhados (__ASSIM__) são trocados na instalação.
+#
+#  ┌────────────────────────────────────────────────────────────────────────┐
+#  │  *** ATENÇÃO — LEIA ANTES DE EDITAR QUALQUER COISA ***                 │
+#  │                                                                        │
+#  │  As três linhas abaixo formam a IDENTIDADE deste servidor:             │
+#  │                                                                        │
+#  │        hostname:     __HOSTNAME_FIXO__                                 │
+#  │        mac_address:  __MAC_ADDRESS__                                   │
+#  │        user:         __USUARIO__                                       │
+#  │                                                                        │
+#  │  A sua licença do PilotoZap foi emitida para essa combinação exata.    │
+#  │  Se QUALQUER uma dessas três linhas mudar — mesmo uma letra — a        │
+#  │  licença PARA DE FUNCIONAR na hora e o painel bloqueia. Recuperar      │
+#  │  exige pedir uma licença nova ao vendedor.                             │
+#  │                                                                        │
+#  │  Por que elas existem: dentro do Docker, o nome da máquina e o         │
+#  │  endereço de rede mudam a cada vez que o container é recriado. Sem     │
+#  │  fixar esses valores, a licença se invalidaria sozinha a cada          │
+#  │  reinício. NÃO REMOVA essas linhas achando que são desnecessárias.     │
+#  └────────────────────────────────────────────────────────────────────────┘
+#
+#  Não há usuário nem senha aqui nem no .env: o login do painel é criado pelo
+#  próprio cliente na primeira vez que ele abre o painel.
+# ==============================================================================
+
+services:
+  __NOME_SERVICO__:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    image: __NOME_IMAGEM__
+    container_name: __NOME_SERVICO__
+
+    # ── IDENTIDADE DA LICENÇA — NÃO ALTERE (veja o aviso no topo) ────────────
+    hostname: __HOSTNAME_FIXO__
+    mac_address: "__MAC_ADDRESS__"
+    user: "__USUARIO__"
+    # ─────────────────────────────────────────────────────────────────────────
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      # Onde ficam as sessões do WhatsApp e as mídias (dentro do container)
+      USERDATA_PATH: /app/userdata
+      # Onde está o painel (as telas do sistema)
+      DIST_DIR: /app/dist
+      PORT: "__PORTA__"
+      TZ: "__TZ__"
+      NODE_ENV: production
+
+    ports:
+      # 127.0.0.1 = SÓ o próprio servidor enxerga esta porta. Ninguém na
+      # internet consegue abrir o seu painel, nem que descubra o IP da VPS.
+      # Você acessa criando um túnel SSH do seu computador:
+      #     ssh -L __PORTA__:127.0.0.1:__PORTA__ root@SEU_IP
+      # e depois abrindo http://localhost:__PORTA__ no navegador.
+      #
+      # NUNCA troque "127.0.0.1:" por "0.0.0.0:" nem deixe só a porta: isso
+      # publicaria o painel na internet sem HTTPS e sem proteção nenhuma.
+      - "127.0.0.1:__PORTA__:__PORTA__"
+
+    volumes:
+      # Banco de dados (SQLite). Sobrevive a atualizações do programa.
+      - __DIR_BASE__/dados/prisma:/app/prisma
+      # Sessões do WhatsApp, mídias recebidas/enviadas, caches.
+      - __DIR_BASE__/dados/userdata:/app/userdata
+
+    # Limita o tamanho dos registros de funcionamento para não encher o disco
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get({host:'127.0.0.1',port:process.env.PORT||3110,path:'/health',timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
