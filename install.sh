@@ -757,6 +757,10 @@ CRON
 
   obter_auxiliar "uninstall.sh" "$DIR_BASE/uninstall.sh" 0 && chmod +x "$DIR_BASE/uninstall.sh" || true
   obter_auxiliar "README.md"    "$DIR_BASE/LEIA-ME.md"   0 || true
+  # Recuperação de senha: o painel roda no servidor do cliente, sem e-mail
+  # configurado, então não existe "esqueci minha senha" por link. Sem este
+  # script, quem esquece a senha depende de alguém ditar comandos por telefone.
+  obter_auxiliar "resetar-senha.sh" "$DIR_BASE/resetar-senha.sh" 0 && chmod +x "$DIR_BASE/resetar-senha.sh" || true
 }
 
 # ETAPA 10 — Relatório final com o túnel SSH pronto
@@ -818,6 +822,7 @@ relatorio_final() {
    Ver o que aconteceu: cd $DIR_BASE && docker compose logs --tail 50
    Reiniciar          : cd $DIR_BASE && docker compose restart
    Backup manual      : bash $DIR_BASE/backup.sh
+   Esqueci a senha    : bash $DIR_BASE/resetar-senha.sh
 
  Pasta da instalação : $DIR_BASE
  Backups             : $DIR_BASE/backups
